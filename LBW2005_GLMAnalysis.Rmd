@@ -1,0 +1,212 @@
+---
+title: "LBW_May31"
+author: "MSR"
+date: "June 23, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+ls(LBW2005_May29_R_org)
+
+str(LBW2005_May29_R_org)
+
+names(LBW2005_May29_R_org) <- tolower(names(LBW2005_May29_R_org))
+
+names(LBW2005_May29_R_org)
+
+head(LBW2005_May29_R_org)
+
+str(LBW2005_May29_R_org)
+
+```
+
+```{r}
+#Useful packages to complete this analysis
+
+#install.packages('dplyr')
+#install.packages('tables')
+#install.packages('epiR')
+#install.packages('tidyverse')
+#install.packages('survival')
+#install.packages('readr')
+#install.packages('tableone')
+#install.packages('tidyr')
+#install.packages('car')
+#install.packages('ggplot2')
+
+library(dplyr)
+library(tables)
+library(epiR)
+library(tidyverse)
+library(survival)
+library(readr)
+library(tableone)
+library(tidyr)
+library(car)
+library(ggplot2)
+```
+
+```{r}
+names(LBW2005_May29_R_org)
+```
+
+```{r}
+#To convert variables to factors
+varstofactor <- c("mother_cal", "father_cal", "mother_c_1", "father_c_1", "bweight", "birth_term", "srcpay")
+LBW2005.factor <- lapply(LBW2005_May29_R_org[varstofactor], factor)
+```
+
+```{r}
+head(LBW2005_May29_R_org)
+```
+
+```{r}
+names(LBW2005_May29_R_org)
+```
+
+```{r}
+#To create age categories as a new variable for an
+labs <- c(paste(seq(0, 95, by = 5), seq(0 + 5 - 1, 100 - 1, by = 5),
+                sep = "-"), paste(100, "+", sep = ""))
+labs
+LBW2005_May29_R_org$mother_agecat <- cut(LBW2005_May29_R_org$mother_age, breaks = c(seq(0, 100, by = 5), Inf), labels = labs, right = FALSE)
+```
+
+```{r}
+LBW2005_May29_R_org$father_agecat <- cut(LBW2005_May29_R_org$father_age, breaks = c(seq(0, 100, by = 5), Inf), labels = labs, right = FALSE)
+```
+
+```{r}
+head(LBW2005_May29_R_org$mother_agecat)
+```
+
+```{r}
+#recode age categories
+library(dplyr)
+LBW2005_May29_R_org$motherage <- recode_factor(LBW2005_May29_R_org$mother_agecat, '0-4' = "<25", '5-9' = "<25", '10-14' = "<25", '15-19' = "<25", '20-24' = "<25", '25-29' = ">=25", '30-34' = ">=25", '35-39' = ">=25", '40-44' = ">=25", '45-49' = ">=25", '50-54' = ">=25", '55-59' = ">=25",'60-64' = ">=25", '65-69' = ">=25", '70-74' = ">=25", '75-79' = ">=25", '80-84' = ">=25", '85-89' = ">=25",'90-94' = ">=25", '95-99' = ">=25", '100+' = ">=25")
+
+LBW2005_May29_R_org$fatherage <- recode_factor(LBW2005_May29_R_org$father_agecat, '0-4' = "<25", '5-9' = "<25", '10-14' = "<25", '15-19' = "<25", '20-24' = "<25", '25-29' = ">=25", '30-34' = ">=25", '35-39' = ">=25", '40-44' = ">=25", '45-49' = ">=25", '50-54' = ">=25", '55-59' = ">=25",'60-64' = ">=25", '65-69' = ">=25", '70-74' = ">=25", '75-79' = ">=25", '80-84' = ">=25", '85-89' = ">=25",'90-94' = ">=25", '95-99' = ">=25", '100+' = ">=25")
+```
+
+```{r}
+#recode parents' ethnicity
+LBW2005_May29_R_org$mother_eth <- recode_factor(LBW2005_May29_R_org$mother_c_1, "Puerto Rican" = "Hispanic", Mexican = "Hispanic", Haitian = "Hispanic", Cuban = "Hispanic")
+
+LBW2005_May29_R_org$father_eth <- recode_factor(LBW2005_May29_R_org$father_c_1, "Puerto Rican" = "Hispanic", Mexican = "Hispanic", "6" = "Hispanic", "Haitian" = "Hispanic", Cuban = "Hispanic", "Other or NA Hispanic" = "NA")
+LBW2005_May29_R_org$father_eth <- na_if(LBW2005_May29_R_org$father_eth, "NA")
+```
+
+```{r}
+#recode education variable
+LBW2005_May29_R_org$mother_edu <- recode_factor(LBW2005_May29_R_org$mother_ed, "8TH GRADE OR LESS" = "< High School", "9TH THRU 12TH GRADE; NO DIPLOMA" = "< High School", "ASSOCIATE DEGREE" = ">= High School", "BACHELORS DEGREE" = ">= High School", "DOCTORATE OR PROFESSIONAL DEGREE" = ">= High School", "HIGH SCHOOL GRADUATE OR GED COMPLETED" = ">= High School", "MASTERS DEGREE" = ">= High School", "SOME COLLEGE CREDIT, BUT NO DEGREE" = ">= High School")
+
+LBW2005_May29_R_org$father_edu <- recode_factor(LBW2005_May29_R_org$father_ed, "8TH GRADE OR LESS" = "< High School", "9TH THRU 12TH GRADE; NO DIPLOMA" = "< High School", "ASSOCIATE DEGREE" = ">= High School", "BACHELORS DEGREE" = ">= High School", "DOCTORATE OR PROFESSIONAL DEGREE" = ">= High School", "HIGH SCHOOL GRADUATE OR GED COMPLETED" = ">= High School", "MASTERS DEGREE" = ">= High School", "SOME COLLEGE CREDIT, BUT NO DEGREE" = ">= High School")
+```
+
+```{r}
+#recode birth facility
+LBW2005_May29_R_org$facility <- recode_factor(LBW2005_May29_R_org$facility_t, "HOSPITAL" = "HOSPITAL", "HOME" = "OUT OF HOSPITAL", "FREESTANDING BIRTH CENTER" = "OUT OF HOSPITAL", "EN ROUTE" = "OUT OF HOSPITAL", "APARTMENT COMPLEX PARKING" = "OUT OF HOSPITAL")
+```
+
+```{r}
+#recode medical source pay
+LBW2005_May29_R_org$medpay <- recode_factor(LBW2005_May29_R_org$srcpay, "Private Insurance" = "Private Insurance", "Medicaid" = "Non-Private Insurance", "Self-Pay" = "Non-Private Insurance", "Other" = "Non-Private Insurance")
+```
+
+```{r}
+names(LBW2005_May29_R_org)
+```
+
+```{r}
+#Select variable and drop NAs in our data prior to running the generalized linear model
+library(tidyr)
+dat1.a <- LBW2005_May29_R_org %>% select("uicode","geoid","motherage","fatherage","father_eth","mother_eth","mother_cal","father_cal","mother_edu","father_edu","facility","sex","bweight","birth_term","medpay","mother_wic","tobacco_us","alcohol_us","smoking_pr","indrocc","otdrocc","mdn_hhic","pw_as","ss_as")
+
+dat.1 <- dat1.a %>% drop_na("uicode","motherage","fatherage","father_cal","mother_cal","mother_eth","father_eth","mother_edu","father_edu","facility","sex","bweight","birth_term","medpay","mother_wic","tobacco_us","alcohol_us","pw_as","ss_as")
+
+varstofactor.1 <- c("motherage","fatherage","father_eth","mother_eth","mother_cal","father_cal","mother_edu","father_edu","facility","sex","bweight","birth_term","medpay","mother_wic","tobacco_us","alcohol_us","smoking_pr")
+
+dat.1[varstofactor.1] <- lapply(dat.1[varstofactor.1], factor)
+
+dat.1$bweight <- factor(dat.1$bweight, levels=rev(levels(dat.1$bweight))) #To make low birth weight the variable that will be compared to other variables in the model 
+
+str(dat.1)
+
+```
+
+```{r}
+#Generalized Linear Modeling
+fit2005.BW<- glm(bweight ~ ., data=subset(dat.1, select=c( -uicode, -geoid, -birth_term, -smoking_pr ) ), family=binomial(link=logit) )
+summary(fit2005.BW)
+
+#Run Step-wise Regression
+fit_BW2005 = step(fit2005.BW)
+summary(fit_BW2005)
+#install.packages("car")
+library(data.table)
+#Run variance inflation factors to assess the explanatory variables for multicollinearity
+library(car)
+vif(fit_BW2005)
+```
+
+```{r}
+#Final Generalized Model that will be used for analysis 
+BW2005.glm = glm(formula = bweight ~ motherage + mother_eth + mother_cal + 
+    sex + tobacco_us + pw_as + ss_as, family = binomial(link = logit), 
+    data = subset(dat.1, select = c(-uicode, -geoid, -birth_term, 
+        -smoking_pr)))
+
+summary(BW2005.glm)
+
+#Use sink to create a csv file of your model
+sink("BW2005_Model.csv")
+print(summary(BW2005.glm))
+sink()
+```
+
+```{r}
+#Run ANOVA and Chi-square on GLM Model
+anova(BW2005.glm)
+anova(BW2005.glm, test="Chisq")
+```
+
+```{r}
+# To create the Receiver Operator Characteristic (ROC) curves for prediction of LBW at Census Tract level. You can map this in ArcGIS.
+library(MASS)
+library(ggplot2)
+
+predicted.BW <- predict(BW2005.glm, dat.1, type=c("response"))
+
+p=predicted.BW
+preddat=dat.1 #original dataset
+preddat$p=p #adds prediction to original dataset
+summary(p)
+
+uid=dat.1$geoid
+avgp=rep(NA,length(uid))
+for(i in 1:length(uid)){
+  avgp[i]=mean(preddat$p[which(as.character(preddat$geoid)==uid[i])])
+}
+write.csv(preddat,file="birthwithpredicted2005.csv")
+write.csv(cbind(uid,avgp),file="byCTavg.csv")
+write.csv(summary(BW2005.glm)$coefficients,file="model2005.csv")
+
+#install.packages("pROC")
+library(pROC)
+roccurve.BW2005 <- roc(dat.1$bweight ~ predicted.BW)
+plot(roccurve.BW2005)
+auc(roccurve.BW2005)
+
+summary(p)
+
+```

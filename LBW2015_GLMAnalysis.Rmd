@@ -1,0 +1,197 @@
+---
+title: "LBW2015_May31"
+author: "MSR"
+date: "June 23, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+```{r}
+ls(LBW2015_May29_R_org)
+
+str(LBW2015_May29_R_org)
+
+names(LBW2015_May29_R_org) <- tolower(names(LBW2015_May29_R_org))
+
+names(LBW2015_May29_R_org)
+
+head(LBW2015_May29_R_org)
+
+str(LBW2015_May29_R_org)
+
+```
+
+```{r}
+library(dplyr)
+library(tables)
+library(epiR)
+library(tidyverse)
+library(survival)
+library(readr)
+library(tableone)
+library(tidyr)
+library(car)
+library(ggplot2)
+```
+
+```{r}
+names(LBW2015_May29_R_org)
+```
+
+```{r}
+varstofactor <- c("mother_cal", "father_cal", "mother_c_1", "father_c_1", "bweight", "birth_term", "srcpay")
+LBW2015.factor <- lapply(LBW2015_May29_R_org[varstofactor], factor)
+```
+
+```{r}
+head(LBW2015_May29_R_org)
+```
+
+```{r}
+names(LBW2015_May29_R_org)
+```
+
+```{r}
+labs <- c(paste(seq(0, 95, by = 5), seq(0 + 5 - 1, 100 - 1, by = 5),
+                sep = "-"), paste(100, "+", sep = ""))
+labs
+LBW2015_May29_R_org$mother_agecat <- cut(LBW2015_May29_R_org$mother_age, breaks = c(seq(0, 100, by = 5), Inf), labels = labs, right = FALSE)
+```
+
+```{r}
+LBW2015_May29_R_org$father_agecat <- cut(LBW2015_May29_R_org$father_age, breaks = c(seq(0, 100, by = 5), Inf), labels = labs, right = FALSE)
+```
+
+```{r}
+head(LBW2015_May29_R_org$mother_agecat)
+```
+
+```{r}
+library(dplyr)
+LBW2015_May29_R_org$motherage <- recode_factor(LBW2015_May29_R_org$mother_agecat, '0-4' = "<25", '5-9' = "<25", '10-14' = "<25", '15-19' = "<25", '20-24' = "<25", '25-29' = ">=25", '30-34' = ">=25", '35-39' = ">=25", '40-44' = ">=25", '45-49' = ">=25", '50-54' = ">=25", '55-59' = ">=25",'60-64' = ">=25", '65-69' = ">=25", '70-74' = ">=25", '75-79' = ">=25", '80-84' = ">=25", '85-89' = ">=25",'90-94' = ">=25", '95-99' = ">=25", '100+' = ">=25")
+
+LBW2015_May29_R_org$fatherage <- recode_factor(LBW2015_May29_R_org$father_agecat, '0-4' = "<25", '5-9' = "<25", '10-14' = "<25", '15-19' = "<25", '20-24' = "<25", '25-29' = ">=25", '30-34' = ">=25", '35-39' = ">=25", '40-44' = ">=25", '45-49' = ">=25", '50-54' = ">=25", '55-59' = ">=25",'60-64' = ">=25", '65-69' = ">=25", '70-74' = ">=25", '75-79' = ">=25", '80-84' = ">=25", '85-89' = ">=25",'90-94' = ">=25", '95-99' = ">=25", '100+' = ">=25")
+```
+
+```{r}
+LBW2015_May29_R_org$mother_eth <- recode_factor(LBW2015_May29_R_org$mother_c_1, "Puerto Rican" = "Hispanic", Mexican = "Hispanic", Haitian = "Hispanic", Cuban = "Hispanic", "Other or Unknown Hispanic" = "NA")
+LBW2015_May29_R_org$mother_eth <- na_if(LBW2015_May29_R_org$mother_eth, "NA")
+
+LBW2015_May29_R_org$father_eth <- recode_factor(LBW2015_May29_R_org$father_c_1, "Puerto Rican" = "Hispanic", Mexican = "Hispanic", "6" = "Hispanic", "Haitian" = "Hispanic", Cuban = "Hispanic", "Other or Unknown Hispanic" = "NA")
+LBW2015_May29_R_org$father_eth <- na_if(LBW2015_May29_R_org$father_eth, "NA")
+```
+
+```{r}
+LBW2015_May29_R_org$mother_edu <- recode_factor(LBW2015_May29_R_org$mother_ed, "8TH GRADE OR LESS" = "< High School", "9TH THRU 12TH GRADE; NO DIPLOMA" = "< High School", "ASSOCIATE DEGREE" = ">= High School", "BACHELORS DEGREE" = ">= High School", "DOCTORATE OR PROFESSIONAL DEGREE" = ">= High School", "HIGH SCHOOL GRADUATE OR GED COMPLETED" = ">= High School", "MASTERS DEGREE" = ">= High School", "SOME COLLEGE CREDIT, BUT NO DEGREE" = ">= High School")
+
+LBW2015_May29_R_org$father_edu <- recode_factor(LBW2015_May29_R_org$father_ed, "8TH GRADE OR LESS" = "< High School", "9TH THRU 12TH GRADE; NO DIPLOMA" = "< High School", "ASSOCIATE DEGREE" = ">= High School", "BACHELORS DEGREE" = ">= High School", "DOCTORATE OR PROFESSIONAL DEGREE" = ">= High School", "HIGH SCHOOL GRADUATE OR GED COMPLETED" = ">= High School", "MASTERS DEGREE" = ">= High School", "SOME COLLEGE CREDIT, BUT NO DEGREE" = ">= High School")
+```
+
+```{r}
+LBW2015_May29_R_org$facility <- recode_factor(LBW2015_May29_R_org$facility_t, "HOSPITAL" = "HOSPITAL", "HOME" = "OUT OF HOSPITAL", "FREESTANDING BIRTH CENTER" = "OUT OF HOSPITAL", "EN ROUTE" = "OUT OF HOSPITAL", "APARTMENT COMPLEX PARKING" = "OUT OF HOSPITAL")
+```
+
+```{r}
+LBW2015_May29_R_org$medpay <- recode_factor(LBW2015_May29_R_org$srcpay, "Private Insurance" = "Private Insurance", "Medicaid" = "Non-Private Insurance", "Self-Pay" = "Non-Private Insurance", "Other" = "Non-Private Insurance")
+```
+
+```{r}
+write.csv(LBW2015_May29_R_org, "LBW2015_May29_R_orgecoded.csv")
+```
+
+```{r}
+names(LBW2015_May29_R_org)
+```
+
+```{r}
+#Modeling
+install.packages('dplyr')
+install.packages('tidyr')
+library(dplyr)
+library(tidyr)
+dat3.a <- LBW2015_May29_R_org %>% select("uicode","geoid","motherage","fatherage","father_eth","mother_eth","mother_cal","father_cal","mother_edu","father_edu","facility","sex","bweight","birth_term","medpay","mother_wic","tobacco_us","alcohol_us","smoking_pr","indrocc","otdrocc","mdn_hhic","pw_as","ss_as")
+
+dat.3 <- dat3.a %>% drop_na("uicode","motherage","fatherage","father_cal","mother_cal","mother_eth","father_eth","mother_edu","father_edu","facility","sex","bweight","birth_term","medpay","mother_wic","tobacco_us","alcohol_us","pw_as","ss_as")
+
+varstofactor.3 <- c("motherage","fatherage","father_eth","mother_eth","mother_cal","father_cal","mother_edu","father_edu","facility","sex","bweight","birth_term","medpay","mother_wic","tobacco_us","alcohol_us","smoking_pr")
+
+dat.3[varstofactor.3] <- lapply(dat.3[varstofactor.3], factor)
+
+dat.3$bweight <- factor(dat.3$bweight, levels=rev(levels(dat.3$bweight)))
+
+str(dat.3)
+
+```
+
+```{r}
+fit2015.BW<- glm(bweight ~ ., data=subset(dat.3, select=c( -uicode, -geoid, -indrocc, -otdrocc, -mdn_hhic)), family=binomial(link=logit))
+summary(fit2015.BW)
+```
+
+```{r}
+fit_BW2015 = step(fit2015.BW)
+summary(fit_BW2015)
+library(car)
+vif(fit_BW2015)
+```
+
+```{r}
+BW2015.glm = glm(formula = bweight ~ mother_eth + mother_cal + mother_edu + 
+    father_edu + sex + birth_term + smoking_pr, family = binomial(link = logit), 
+    data = subset(dat.3, select = c(-uicode, -geoid, -indrocc, 
+        -otdrocc, -mdn_hhic)))
+
+summary(BW2015.glm)
+
+sink("BW2015_Model.csv")
+print(summary(BW2015.glm))
+sink()
+```
+
+```{r}
+anova(BW2015.glm)
+```
+
+```{r}
+anova(BW2015.glm, test="Chisq")
+```
+
+```{r}
+library(MASS)
+library(ggplot2)
+
+predicted.BW <- predict(BW2015.glm, dat.3, type=c("response"))
+
+p=predicted.BW
+preddat=dat.3 #original dataset
+preddat$p=p #adds prediction to original dataset
+summary(p)
+
+uid=dat.3$geoid
+avgp=rep(NA,length(uid))
+for(i in 1:length(uid)){
+  avgp[i]=mean(preddat$p[which(as.character(preddat$geoid)==uid[i])])
+}
+write.csv(preddat,file="birthwithpredicted2015.csv")
+write.csv(cbind(uid,avgp),file="byCTavg2015.csv")
+write.csv(summary(BW2015.glm)$coefficients,file="model2015.csv")
+
+library(pROC)
+roccurve.BW2015 <- roc(dat.3$bweight ~ predicted.BW)
+plot(roccurve.BW2015)
+auc(roccurve.BW2015)
+summary(p)
+
+```

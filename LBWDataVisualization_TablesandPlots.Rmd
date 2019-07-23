@@ -1,0 +1,113 @@
+---
+title: "LBW_TablesandPlots"
+author: "MSR"
+date: "June 23, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+#Creating Descriptive Tables for each year
+
+#install.packages('tableone')
+library(tableone)
+var.table1 <- c("motherage","fatherage","father_eth","mother_eth","mother_cal","father_cal","mother_edu","father_edu","facility","sex","bweight","birth_term","medpay","mother_wic","tobacco_us","alcohol_us","smoking_pr")
+tableOne <- CreateTableOne(vars = var.table1, data = dat.1)
+csv1 <- print(tableOne, showAllLevels = TRUE)
+# Use the showAllLevels argument to see all levels for all variables
+#this creates the csv file
+write.csv(as.data.frame(csv1), "DescriptiveStats2005.csv")
+```
+
+```{r}
+var.table2 <- c("motherage","fatherage","father_eth","mother_eth","mother_cal","father_cal","mother_edu","father_edu","facility","sex","bweight","birth_term","medpay","mother_wic","tobacco_us","alcohol_us","smoking_pr")
+tableOne.2 <- CreateTableOne(vars = var.table2, data = dat.2)
+csv2 <- print(tableOne.2, showAllLevels = TRUE)
+
+write.csv(as.data.frame(csv2), "DescriptiveStats2010.csv")
+```
+
+```{r}
+var.table3 <- c("motherage","fatherage","father_eth","mother_eth","mother_cal","father_cal","mother_edu","father_edu","facility","sex","bweight","birth_term","medpay","mother_wic","tobacco_us","alcohol_us","smoking_pr")
+tableOne.3 <- CreateTableOne(vars = var.table3, data = dat.3)
+csv3 <- print(tableOne.3, showAllLevels = TRUE)
+
+write.csv(as.data.frame(csv3), "DescriptiveStats2015.csv")
+```
+
+```{r}
+#Visualizing the ROC Curves for each year 
+library(ggplot2)
+library(plotROC)
+library(pROC)
+
+round(auc(roccurve.BW2005),2)
+round(auc(roccurve.BW2010),2)
+round(auc(roccurve.BW2015),2)
+
+#Creating ROC Curve and plotting AUC
+png("ROCplot.png") 
+plot(roccurve.BW2005, col = 2, lwd = 3, main = "Receiver Operator Characteristic (ROC) Curves")
+plot(roccurve.BW2010, col = 4, lwd = 3, add = TRUE)
+plot(roccurve.BW2015, col = 1, lwd = 3, add = TRUE)
+plot(legend("bottomright", legend=c("2005: AUC = 0.75", "2010: AUC = 0.79", "2015: AUC = 0.87"), col=c(2, 4,1), lwd=3))
+dev.off() 
+```
+
+```{r}
+#Helpful packages
+#install.packages('ggstance')
+#install.packages('jtools')
+#install.packages('huxtable')
+#install.packages('officer')
+#install.packages('flextable')
+#install.packages('rcompanion')
+#install.packages('sjPlot')
+
+library(ggstance)
+library(jtools)
+library(ggstance)
+library(jtools)
+library(huxtable)
+library(officer)
+library(flextable)
+library(tidyr)
+
+#Export regression summaries to tables from final GLM models
+export_summs(BW2005.glm, BW2010.glm, BW2015.glm, scale = TRUE, to.file = "docx", file.name = "modelsummary.docx")
+```
+
+```{r}
+#Calculating Odds Ratios
+BW2005.OR = exp(cbind(OR = coef(BW2005.glm), confint(BW2005.glm)))
+BW2010.OR = exp(cbind(OR = coef(BW2010.glm), confint(BW2010.glm)))
+BW2015.OR = exp(cbind(OR = coef(BW2015.glm), confint(BW2015.glm)))
+
+BW2005.OR
+BW2010.OR
+BW2015.OR
+```
+
+```{r}
+#Writing Odds Ratios as a csv file
+write.csv(BW2005.OR, file = "BW2005_ORjuly.csv")
+write.csv(BW2010.OR, file = "BW2010_ORjuly.csv")
+write.csv(BW2015.OR, file = "BW2015_ORjuly.csv")
+#data should be reported in scientific notation
+```
+
+
+```{r}
+#citing R
+citation()
+```
+
